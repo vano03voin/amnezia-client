@@ -9,6 +9,7 @@
 #include "../client/core/utils/protocolEnum.h"
 #include "../client/core/protocols/protocolUtils.h"
 #include "../client/core/utils/constants/configKeys.h"
+#include "../client/core/utils/routeModes.h"
 #include "../client/core/utils/constants/protocolConstants.h"
 #include "qjsonarray.h"
 #include "version.h"
@@ -272,6 +273,8 @@ bool KillSwitch::enablePeerTraffic(const QJsonObject &configStr) {
         }
     }
 
+    config.m_onlyVpnApps = configStr.value(amnezia::configKey::appSplitTunnelType).toInt()
+            == amnezia::AppsRouteMode::VpnOnlyForwardApps;
     for (const QJsonValue &i : configStr.value(amnezia::configKey::splitTunnelApps).toArray()) {
         if (!i.isString()) {
             break;
@@ -292,7 +295,7 @@ bool KillSwitch::enablePeerTraffic(const QJsonObject &configStr) {
     }
 
     WindowsDaemon::instance()->prepareActivation(config, inetAdapterIndex);
-    WindowsDaemon::instance()->activateSplitTunnel(config, vpnAdapterIndex);
+    return WindowsDaemon::instance()->activateSplitTunnel(config, vpnAdapterIndex);
 #endif
     return true;
 }

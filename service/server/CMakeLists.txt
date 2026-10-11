@@ -463,7 +463,17 @@ if (WIN32)
         COMPONENT AmneziaVPN
     )
 
-    find_package(win-split-tunnel REQUIRED)
+    set(AMNEZIA_SPLIT_TUNNEL_DRIVER_DIR "" CACHE PATH "Inclusion-capable split tunnel driver package")
+    if(AMNEZIA_SPLIT_TUNNEL_DRIVER_DIR)
+        set(WIN_SPLIT_TUNNEL_BIN "${AMNEZIA_SPLIT_TUNNEL_DRIVER_DIR}")
+        foreach(_driver_file mullvad-split-tunnel.sys mullvad-split-tunnel.inf mullvad-split-tunnel.cat)
+            if(NOT EXISTS "${WIN_SPLIT_TUNNEL_BIN}/${_driver_file}")
+                message(FATAL_ERROR "Incomplete split tunnel driver package: missing ${_driver_file}")
+            endif()
+        endforeach()
+    else()
+        find_package(win-split-tunnel REQUIRED)
+    endif()
     add_custom_command(TARGET ${PROJECT} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${WIN_SPLIT_TUNNEL_BIN}"

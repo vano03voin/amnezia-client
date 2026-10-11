@@ -507,7 +507,11 @@ void VpnConnection::appendSplitTunnelingConfig()
             appsJsonArray.append(app.appPath.isEmpty() ? app.packageName : app.appPath);
         }
 
-        if (appsJsonArray.isEmpty()) {
+        if (appsJsonArray.isEmpty()
+#ifdef Q_OS_WINDOWS
+            && appsRouteMode != amnezia::AppsRouteMode::VpnOnlyForwardApps
+#endif
+        ) {
             appsRouteMode = amnezia::AppsRouteMode::VpnAllApps;
         }
     }

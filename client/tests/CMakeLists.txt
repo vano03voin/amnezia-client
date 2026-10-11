@@ -104,6 +104,10 @@ if(NOT ANDROID)
         test_common
     )
 
+    add_executable(test_app_split_tunnel_ipc testAppSplitTunnelIpc.cpp)
+    target_link_libraries(test_app_split_tunnel_ipc PRIVATE Qt6::Test test_common)
+    add_test(NAME AppSplitTunnelIpcTest COMMAND test_app_split_tunnel_ipc)
+
     add_executable(test_settings_signals
         testSettingsSignals.cpp
     )

@@ -28,6 +28,7 @@
 #include "core/utils/protocolEnum.h"
 #include "core/protocols/protocolUtils.h"
 #include "core/utils/constants/configKeys.h"
+#include "core/utils/routeModes.h"
 #include "core/utils/constants/protocolConstants.h"
 
 // How many times do we try to reconnect.
@@ -247,6 +248,7 @@ void LocalSocketController::activate(const QJsonObject &rawConfig) {
   json.insert("excludedAddresses", jsExcludedAddresses);
 
   json.insert("vpnDisabledApps", splitTunnelApps);
+  json.insert("onlyVpnApps", appSplitTunnelType == amnezia::AppsRouteMode::VpnOnlyForwardApps);
 
   json.insert("allowedDnsServers", allowedDns);
 

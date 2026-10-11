@@ -118,6 +118,11 @@ using ProcessInfo = struct {
 
 #define IOCTL_ST_RESET CTL_CODE(0x8000, 11, METHOD_NEITHER, FILE_ANY_ACCESS)
 
+#define IOCTL_SET_INCLUSION_CONFIGURATION \
+  CTL_CODE(0x8000, 12, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_GET_CAPABILITIES \
+  CTL_CODE(0x8000, 13, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
 constexpr static const auto DRIVER_SYMLINK = L"\\\\.\\MULLVADSPLITTUNNEL";
 constexpr static const auto DRIVER_FILENAME = "mullvad-split-tunnel.sys";
 constexpr static const auto DRIVER_SERVICE_NAME = L"AmneziaVPNSplitTunnel";
@@ -291,6 +296,18 @@ WindowsSplitTunnel::~WindowsSplitTunnel() {
 }
 
 bool WindowsSplitTunnel::excludeApps(const QStringList& appPaths) {
+  return configureApps(appPaths, false);
+}
+
+bool WindowsSplitTunnel::supportsInclusionMode() const {
+  DWORD bytesReturned = 0;
+  uint32_t capabilities = 0;
+  return DeviceIoControl(m_driver, IOCTL_GET_CAPABILITIES, nullptr, 0,
+                        &capabilities, sizeof(capabilities), &bytesReturned, nullptr)
+         && bytesReturned == sizeof(capabilities) && (capabilities & 1u);
+}
+
+bool WindowsSplitTunnel::configureApps(const QStringList& appPaths, bool onlyVpnApps) {
   auto state = getState();
   if (state != STATE_READY && state != STATE_RUNNING) {
     logger.warning() << "Driver is not in the right State to set Rules"
@@ -299,18 +316,21 @@ bool WindowsSplitTunnel::excludeApps(const QStringList& appPaths) {
   }
 
   logger.debug() << "Pushing new Ruleset for Split-Tunnel " << state;
-  auto config = generateAppConfiguration(appPaths);
+  auto config = generateAppConfiguration(appPaths, onlyVpnApps);
   if (config.empty()) {
     logger.error() << "No valid split-tunnel application rules generated";
     return false;
   }
 
   DWORD bytesReturned;
-  auto ok = DeviceIoControl(m_driver, IOCTL_SET_CONFIGURATION, &config[0],
+  auto ok = DeviceIoControl(m_driver, onlyVpnApps ? IOCTL_SET_INCLUSION_CONFIGURATION : IOCTL_SET_CONFIGURATION, &config[0],
                             (DWORD)config.size(), nullptr, 0, &bytesReturned,
                             nullptr);
   if (!ok) {
     auto err = GetLastError();
+    if (onlyVpnApps && (err == ERROR_INVALID_FUNCTION || err == ERROR_NOT_SUPPORTED)) {
+      logger.error() << "This split tunnel driver does not support VPN inclusion mode. Install the inclusion-capable driver package.";
+    }
     WindowsUtils::windowsLog("Set Config Failed:");
     logger.error() << "Failed to set Config err code " << err;
     return false;
@@ -426,7 +446,7 @@ WindowsSplitTunnel::DRIVER_STATE WindowsSplitTunnel::getState() {
 }
 
 std::vector<uint8_t> WindowsSplitTunnel::generateAppConfiguration(
-    const QStringList& appPaths) {
+    const QStringList& appPaths, bool allowEmpty) {
   // Step 1: Calculate how much size the buffer will need
   size_t cummulated_string_size = 0;
   QStringList dosPaths;
@@ -437,12 +457,12 @@ std::vector<uint8_t> WindowsSplitTunnel::generateAppConfiguration(
       logger.error() << "Rejecting split-tunnel app path with empty device "
                         "conversion:"
                      << normalizedPath;
-      continue;
+      return {};
     }
     dosPaths.append(dosPath);
     cummulated_string_size += dosPath.toStdWString().size() * sizeof(wchar_t);
   }
-  if (dosPaths.isEmpty()) {
+  if (dosPaths.isEmpty() && !allowEmpty) {
     return {};
   }
   size_t bufferSize = sizeof(CONFIGURATION_HEADER) +

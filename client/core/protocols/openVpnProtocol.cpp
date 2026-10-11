@@ -380,7 +380,12 @@ void OpenVpnProtocol::updateVpnGateway(const QString &line)
                                 m_configData.insert("vpnGateway", m_vpnGateway);
                                 m_configData.insert("vpnServer",
                                                     NetworkUtilities::getIPAddress(m_configData.value(amnezia::configKey::hostName).toString()));
-                                iface->enablePeerTraffic(m_configData);
+                                auto policy = iface->enablePeerTraffic(m_configData);
+                                if (!policy.waitForFinished() || !policy.returnValue()) {
+                                    qCritical() << "Failed to apply application split tunneling";
+                                    emit protocolError(ErrorCode::InternalError);
+                                    return;
+                                }
                             }
                         }
                     }

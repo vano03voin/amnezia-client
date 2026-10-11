@@ -47,6 +47,8 @@ class WindowsSplitTunnel final {
   // void excludeApps(const QStringList& paths);
   // Excludes an Application from the VPN
   bool excludeApps(const QStringList& appPaths);
+  bool configureApps(const QStringList& appPaths, bool onlyVpnApps);
+  bool supportsInclusionMode() const;
 
   // Fetches and Pushed needed info to move to engaged mode
   bool start(int inetAdapterIndex, int vpnAdapterIndex = 0);
@@ -83,7 +85,7 @@ class WindowsSplitTunnel final {
   QString stateString();
 
   // Generates a Configuration for Each APP
-  std::vector<uint8_t> generateAppConfiguration(const QStringList& appPaths);
+  std::vector<uint8_t> generateAppConfiguration(const QStringList& appPaths, bool allowEmpty = false);
   // Generates a Configuration which IP's are VPN and which network
   std::vector<std::byte> generateIPConfiguration(int inetAdapterIndex, int vpnAdapterIndex = 0);
   std::vector<uint8_t> generateProcessBlob();

@@ -383,6 +383,11 @@ bool Daemon::parseConfig(const QJsonObject& obj, InterfaceConfig& config) {
   if (!parseStringList(obj, "excludedAddresses", config.m_excludedAddresses)) {
     return false;
   }
+  if (obj.contains("onlyVpnApps") && !obj.value("onlyVpnApps").isBool()) {
+    logger.error() << "onlyVpnApps must be a boolean";
+    return false;
+  }
+  config.m_onlyVpnApps = obj.value("onlyVpnApps").toBool(false);
   if (!parseStringList(obj, "vpnDisabledApps", config.m_vpnDisabledApps)) {
     return false;
   }
