@@ -114,8 +114,26 @@ void OpenVpnProtocol::readOpenVpnConfiguration(const QJsonObject &configuration)
         m_configData = configuration;
         QJsonObject jConfig = configuration.value(ProtocolUtils::key_proto_config_data(Proto::OpenVpn)).toObject();
 
+        QString nativeConfig = jConfig.value(configKey::config).toString();
+#ifdef Q_OS_WIN
+        if (configuration.value(configKey::appSplitTunnelType).toInt() == amnezia::AppsRouteMode::VpnOnlyForwardApps) {
+            // The system resolver is shared; keep the physical adapter's DNS.
+            QStringList lines = nativeConfig.split('\n');
+            for (auto it = lines.begin(); it != lines.end();) {
+                const QString line = it->trimmed();
+                if (line.startsWith("dhcp-option DNS", Qt::CaseInsensitive)
+                    || line.startsWith("block-outside-dns", Qt::CaseInsensitive)) {
+                    it = lines.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+            nativeConfig = lines.join('\n') + "\npull-filter ignore \"dhcp-option DNS\"\n"
+                                             "pull-filter ignore \"block-outside-dns\"\n";
+        }
+#endif
         m_configFile.open();
-        m_configFile.write(jConfig.value(configKey::config).toString().toUtf8());
+        m_configFile.write(nativeConfig.toUtf8());
         m_configFile.close();
         m_configFileName = m_configFile.fileName();
         qDebug().noquote() << QString("Set config data") << m_configFileName;

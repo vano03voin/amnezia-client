@@ -3990,8 +3990,8 @@ Create one from the current settings.</source>
     </message>
     <message>
         <location filename="../ui/qml/Pages2/PageSettingsAppSplitTunneling.qml" line="154"/>
-        <source>Only &quot;Apps from the list should not have access via VPN&quot; mode is available on Windows</source>
-        <translation>На Windows доступен только режим &quot;Приложения из списка не должны работать через VPN&quot;</translation>
+        <source>In VPN-only mode, add helper executables to the list as well. Restart applications after connecting.</source>
+        <translation>В режиме «только выбранные через VPN» добавьте в список также вспомогательные программы. Перезапустите приложения после подключения.</translation>
     </message>
     <message>
         <location filename="../ui/qml/Pages2/PageSettingsAppSplitTunneling.qml" line="200"/>

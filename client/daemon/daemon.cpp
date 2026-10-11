@@ -166,6 +166,13 @@ bool Daemon::activate(const InterfaceConfig& config) {
 }
 
 bool Daemon::maybeUpdateResolvers(const InterfaceConfig& config) {
+#ifdef Q_OS_WINDOWS
+  // Windows DNS Client is shared across processes. Preserve native resolvers
+  // rather than point bypassed service traffic at a private VPN-only DNS server.
+  if (config.m_onlyVpnApps) {
+    return true;
+  }
+#endif
   if ((config.m_hopType == InterfaceConfig::MultiHopExit) ||
       (config.m_hopType == InterfaceConfig::SingleHop)) {
     QList<QHostAddress> resolvers;

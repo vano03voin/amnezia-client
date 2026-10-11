@@ -261,10 +261,17 @@ ErrorCode XrayProtocol::setupRouting()
                     return ErrorCode::InternalError;
                 }
 
-                auto updateResolvers = iface->updateResolvers(tunName, m_dnsServers);
-                if (!updateResolvers.waitForFinished() || !updateResolvers.returnValue()) {
-                    qCritical() << "Failed to set DNS resolvers for TUN";
-                    return ErrorCode::InternalError;
+                bool updateDns = true;
+#ifdef Q_OS_WIN
+                updateDns = m_rawConfig.value(configKey::appSplitTunnelType).toInt()
+                        != amnezia::AppsRouteMode::VpnOnlyForwardApps;
+#endif
+                if (updateDns) {
+                    auto updateResolvers = iface->updateResolvers(tunName, m_dnsServers);
+                    if (!updateResolvers.waitForFinished() || !updateResolvers.returnValue()) {
+                        qCritical() << "Failed to set DNS resolvers for TUN";
+                        return ErrorCode::InternalError;
+                    }
                 }
 
 #ifdef Q_OS_WIN

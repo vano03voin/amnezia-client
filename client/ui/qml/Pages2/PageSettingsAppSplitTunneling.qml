@@ -155,6 +155,7 @@ PageType {
             iconPath: "qrc:/images/controls/alert-circle.svg"
 
             visible: (Qt.platform.os === "windows") && root.pageEnabled
+                     && AppSplitTunnelingController.routeMode === routeMode.onlyForwardApps
         }
     }
 

@@ -29,7 +29,7 @@ jobs:
       - name: Compile kernel driver (unsigned, for isolated testing)
         shell: cmd
         working-directory: drivers/windows-split-tunnel/src
-        run: msbuild mullvad-split-tunnel.vcxproj /m /p:Configuration=Release /p:Platform=x64 /p:SignMode=Off /p:SpectreMitigation=false /p:SolutionDir="%CD%\"
+        run: msbuild mullvad-split-tunnel.sln /m /p:Configuration=Release /p:Platform=x64 /p:SignMode=Off /p:SpectreMitigation=false
       - uses: actions/upload-artifact@v4
         with:
           name: inclusion-driver-unsigned
