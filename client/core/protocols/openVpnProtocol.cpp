@@ -81,7 +81,16 @@ void OpenVpnProtocol::stop()
 
 ErrorCode OpenVpnProtocol::prepare()
 {
-    return IpcClient::withInterface([](QSharedPointer<IpcInterfaceReplica> iface) {
+    return IpcClient::withInterface([this](QSharedPointer<IpcInterfaceReplica> iface) {
+#ifdef Q_OS_WIN
+        if (m_configData.value(configKey::appSplitTunnelType).toInt() == amnezia::AppsRouteMode::VpnOnlyForwardApps) {
+            auto supported = iface->supportsAppInclusion();
+            if (!supported.waitForFinished() || !supported.returnValue()) {
+                qCritical() << "The installed driver does not support VPN inclusion mode";
+                return ErrorCode::NotImplementedError;
+            }
+        }
+#endif
         QRemoteObjectPendingReply<QStringList> listReply = iface->getTapList();
         if (!listReply.waitForFinished(1000)) {
             return ErrorCode::InternalError;

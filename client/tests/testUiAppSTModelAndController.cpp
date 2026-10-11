@@ -10,6 +10,7 @@
 #include <QTest>
 
 #include "utils/testCoreController.h"
+#include "core/controllers/settingsController.h"
 #include "core/models/serverDescription.h"
 #include "secureQSettings.h"
 #include "vpnConnection.h"
@@ -25,6 +26,23 @@ private:
     SecureQSettings *m_settings;
 
 private slots:
+    void inclusionModeSurvivesBackupRestore()
+    {
+#ifdef Q_OS_WINDOWS
+        auto* apps = m_coreController->m_appSplitTunnelingUiController;
+        apps->setRouteMode(AppsRouteMode::VpnOnlyForwardApps);
+        apps->toggleSplitTunneling(true);
+        const QByteArray backup = m_coreController->m_settingsController->backupAppConfig();
+        apps->setRouteMode(AppsRouteMode::VpnAllExceptApps);
+        QCOMPARE(m_coreController->m_settingsController->restoreAppConfigFromData(backup), ErrorCode::NoError);
+        QCOMPARE(apps->getRouteMode(), int(AppsRouteMode::VpnOnlyForwardApps));
+        QVERIFY(apps->isSplitTunnelingEnabled());
+        // Leave the normal initial mode for the existing model tests.
+        apps->setRouteMode(AppsRouteMode::VpnAllExceptApps);
+        apps->toggleSplitTunneling(false);
+#endif
+    }
+
     void initTestCase()
     {
         QString testOrg = "AmneziaVPN-Test-" + QUuid::createUuid().toString();

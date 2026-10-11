@@ -106,6 +106,15 @@ ErrorCode XrayProtocol::start()
 
     return IpcClient::withInterface(
             [&](QSharedPointer<IpcInterfaceReplica> iface) {
+#ifdef Q_OS_WIN
+                if (m_rawConfig.value(configKey::appSplitTunnelType).toInt() == amnezia::AppsRouteMode::VpnOnlyForwardApps) {
+                    auto supported = iface->supportsAppInclusion();
+                    if (!supported.waitForFinished() || !supported.returnValue()) {
+                        qCritical() << "The installed driver does not support VPN inclusion mode";
+                        return ErrorCode::NotImplementedError;
+                    }
+                }
+#endif
                 auto xrayStart = iface->xrayStart(xrayConfigStr);
                 if (!xrayStart.waitForFinished() || !xrayStart.returnValue()) {
                     qCritical() << "Failed to start xray";

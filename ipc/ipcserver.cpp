@@ -20,6 +20,7 @@
 
 #ifdef Q_OS_WIN
     #include "tapcontroller_win.h"
+    #include "platforms/windows/daemon/windowsdaemon.h"
 #endif
 
 
@@ -284,6 +285,15 @@ bool IpcServer::disableKillSwitch()
 #endif
 
     return KillSwitch::instance()->disableKillSwitch();
+}
+
+bool IpcServer::supportsAppInclusion()
+{
+#ifdef Q_OS_WIN
+    return WindowsDaemon::instance()->supportsAppInclusion();
+#else
+    return false;
+#endif
 }
 
 bool IpcServer::enablePeerTraffic(const QJsonObject &configStr)

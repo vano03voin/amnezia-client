@@ -99,6 +99,11 @@ bool KillSwitch::isStrictKillSwitchEnabled()
 }
 
 bool KillSwitch::disableKillSwitch() {
+#ifdef Q_OS_WIN
+    // OpenVPN and Xray do not call Daemon::run(Down). Clear their application
+    // policy as well, so it cannot keep redirecting traffic after disconnect.
+    WindowsDaemon::instance()->activateSplitTunnel(InterfaceConfig{});
+#endif
 #ifdef Q_OS_LINUX
     if (isStrictKillSwitchEnabled()) {
         LinuxFirewall::setAnchorEnabled(LinuxFirewall::Both, QStringLiteral("000.allowLoopback"), true);

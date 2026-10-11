@@ -23,6 +23,10 @@ class WindowsDaemon final : public Daemon {
   WindowsDaemon();
   ~WindowsDaemon();
 
+  bool supportsAppInclusion() const {
+    return m_splitTunnelManager && m_splitTunnelManager->supportsInclusionMode();
+  }
+
   void prepareActivation(const InterfaceConfig& config, int inetAdapterIndex = 0) override;
   bool activate(const InterfaceConfig& config) override;
   bool activateSplitTunnel(const InterfaceConfig& config, int vpnAdapterIndex = 0) override;
